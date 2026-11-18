@@ -1,6 +1,4 @@
-import { FTCProduct } from './types.js';
-
-export const FTC_RESCUE_KIT: FTCProduct = {
+export const FTC_RESCUE_KIT = {
   id: 'kit-rescue-01',
   sku: 'SS-KIT-RESCUE',
   name: 'FTC League Night Rescue Kit (Organizer Box)',
@@ -13,8 +11,8 @@ export const FTC_RESCUE_KIT: FTCProduct = {
   inStock: true,
 };
 
-export const FTC_CATALOG: FTCProduct[] = [
-  // BEARINGS (4 SKUs)
+export const FTC_CATALOG = [
+  // BEARINGS
   {
     id: 'brg-688zz',
     sku: 'SS-BRG-688ZZ',
@@ -64,7 +62,7 @@ export const FTC_CATALOG: FTCProduct[] = [
     inStock: true,
   },
 
-  // SHAFT COLLARS (3 SKUs)
+  // SHAFT COLLARS
   {
     id: 'col-8mm-clamp',
     sku: 'SS-COL-8CLAMP',
@@ -102,7 +100,7 @@ export const FTC_CATALOG: FTCProduct[] = [
     inStock: true,
   },
 
-  // SHAFTING (2 SKUs)
+  // SHAFTING
   {
     id: 'shf-8mm-300',
     sku: 'SS-SHF-8D300',
@@ -128,7 +126,7 @@ export const FTC_CATALOG: FTCProduct[] = [
     inStock: true,
   },
 
-  // FASTENERS & SPACERS (4 SKUs)
+  // FASTENERS & SPACERS
   {
     id: 'fst-m4-shcs',
     sku: 'SS-FST-M4MIX',
@@ -178,7 +176,7 @@ export const FTC_CATALOG: FTCProduct[] = [
     inStock: true,
   },
 
-  // FTC MOTION & INTAKES (4 SKUs)
+  // FTC MOTION & INTAKES
   {
     id: 'mot-htd5m-belt',
     sku: 'SS-BLT-HTD5M',
