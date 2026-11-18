@@ -1,24 +1,17 @@
 import { FTC_CATALOG, FTC_RESCUE_KIT } from './catalogData.js';
-import { CartItem, FTCProduct, PlateMaterialKey, PlateQuoteResult, ProductCategory } from './types.js';
 
-// ============================================================================
-// APPLICATION STATE
-// ============================================================================
-let activeCategory: ProductCategory | 'ALL' = 'ALL';
+let activeCategory = 'ALL';
 let searchQuery = '';
-let cart: CartItem[] = [];
+let cart = [];
 let uploadedFileName = 'custom_drivetrain_plate.dxf';
 
-const MATERIAL_RATES: Record<PlateMaterialKey, { label: string; ratePerSqIn: number }> = {
+const MATERIAL_RATES = {
   alu_2mm: { label: '2.0mm 6061-T6 Aluminum', ratePerSqIn: 0.25 },
   poly_3mm: { label: '3.0mm Clear Polycarbonate', ratePerSqIn: 0.18 },
   delrin_3mm: { label: '3.0mm Black Delrin', ratePerSqIn: 0.18 },
 };
 
-// ============================================================================
-// CATALOG RENDERING & FILTERING
-// ============================================================================
-function renderCatalog(): void {
+function renderCatalog() {
   const grid = document.getElementById('productGrid');
   if (!grid) return;
 
@@ -34,7 +27,7 @@ function renderCatalog(): void {
   });
 
   if (filtered.length === 0) {
-    grid.innerHTML = `<p style="color: var(--text-secondary); grid-column: 1/-1;">No FTC SKUs matched "${searchQuery}". Try searching "8mm", "M4", or "Bearing".</p>`;
+    grid.innerHTML = `<p style="color: var(--text-secondary); grid-column: 1/-1;">No FTC SKUs matched "${searchQuery}".</p>`;
     return;
   }
 
@@ -66,8 +59,7 @@ function renderCatalog(): void {
     )
     .join('');
 
-  // Attach Add-to-Cart listeners
-  grid.querySelectorAll<HTMLButtonElement>('[data-add-id]').forEach((btn) => {
+  grid.querySelectorAll('[data-add-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-add-id');
       const product = FTC_CATALOG.find((p) => p.id === id);
@@ -76,34 +68,28 @@ function renderCatalog(): void {
   });
 }
 
-// ============================================================================
-// INSTANT DXF PLATE QUOTE CALCULATOR
-// ============================================================================
-function calculatePlateQuote(): PlateQuoteResult {
-  const matSelect = document.getElementById('plateMaterial') as HTMLSelectElement;
-  const qtyInput = document.getElementById('plateQty') as HTMLInputElement;
-  const widthInput = document.getElementById('plateWidth') as HTMLInputElement;
-  const heightInput = document.getElementById('plateHeight') as HTMLInputElement;
+function calculatePlateQuote() {
+  const matSelect = document.getElementById('plateMaterial');
+  const qtyInput = document.getElementById('plateQty');
+  const widthInput = document.getElementById('plateWidth');
+  const heightInput = document.getElementById('plateHeight');
 
-  const matKey = (matSelect?.value || 'alu_2mm') as PlateMaterialKey;
-  const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
-  const width = Math.max(0.5, parseFloat(widthInput?.value || '1'));
-  const height = Math.max(0.5, parseFloat(heightInput?.value || '1'));
+  const matKey = matSelect ? matSelect.value : 'alu_2mm';
+  const qty = Math.max(1, parseInt(qtyInput ? qtyInput.value : '1', 10));
+  const width = Math.max(0.5, parseFloat(widthInput ? widthInput.value : '1'));
+  const height = Math.max(0.5, parseFloat(heightInput ? heightInput.value : '1'));
 
   const materialInfo = MATERIAL_RATES[matKey];
   const areaSqIn = width * height;
   const unitCutCost = areaSqIn * materialInfo.ratePerSqIn;
   const rawCutSubtotal = unitCutCost * qty;
 
-  // Automatic 15% symmetrical pair discount when ordering 2+ plates
   const pairDiscount = qty >= 2 ? rawCutSubtotal * 0.15 : 0;
   const discountedCutTotal = rawCutSubtotal - pairDiscount;
 
-  // $3.50 setup fee waived on custom plate jobs over $35
   const setupFee = discountedCutTotal >= 35 ? 0 : 3.5;
   const totalPrice = discountedCutTotal + setupFee;
 
-  // Update DOM displays
   setText('quoteAreaDisplay', `${areaSqIn.toFixed(2)} sq in`);
   setText('quoteCutCostDisplay', `$${unitCutCost.toFixed(2)} / plate`);
   setText('quoteSetupDisplay', setupFee === 0 ? 'WAIVED ($0.00)' : `$${setupFee.toFixed(2)}`);
@@ -113,17 +99,11 @@ function calculatePlateQuote(): PlateQuoteResult {
   return {
     materialLabel: materialInfo.label,
     areaSqIn,
-    unitCutCost,
-    setupFee,
-    pairDiscount,
     totalPrice,
   };
 }
 
-// ============================================================================
-// CART & FREE SHIPPING THRESHOLD LOGIC ($40 FTC THRESHOLD)
-// ============================================================================
-function addProductToCart(product: FTCProduct): void {
+function addProductToCart(product) {
   const existing = cart.find((item) => item.id === product.id);
   if (existing) {
     existing.quantity += 1;
@@ -141,10 +121,10 @@ function addProductToCart(product: FTCProduct): void {
   toggleCartDrawer(true);
 }
 
-function addCustomPlateJobToCart(): void {
+function addCustomPlateJobToCart() {
   const quote = calculatePlateQuote();
-  const qtyInput = document.getElementById('plateQty') as HTMLInputElement;
-  const qty = Math.max(1, parseInt(qtyInput?.value || '1', 10));
+  const qtyInput = document.getElementById('plateQty');
+  const qty = Math.max(1, parseInt(qtyInput ? qtyInput.value : '1', 10));
 
   cart.push({
     id: `plate-${Date.now()}`,
@@ -159,7 +139,7 @@ function addCustomPlateJobToCart(): void {
   toggleCartDrawer(true);
 }
 
-function renderCart(): void {
+function renderCart() {
   const container = document.getElementById('cartItemsContainer');
   const badge = document.getElementById('cartCountBadge');
   if (!container || !badge) return;
@@ -188,7 +168,7 @@ function renderCart(): void {
       )
       .join('');
 
-    container.querySelectorAll<HTMLButtonElement>('[data-qty-delta]').forEach((btn) => {
+    container.querySelectorAll('[data-qty-delta]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const idx = Number(btn.getAttribute('data-idx'));
         const delta = Number(btn.getAttribute('data-qty-delta'));
@@ -201,7 +181,6 @@ function renderCart(): void {
     });
   }
 
-  // Calculate Totals & $40 Free Shipping Threshold
   const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const freeShippingThreshold = 40.0;
   const qualifiesFreeShip = subtotal >= freeShippingThreshold || subtotal === 0;
@@ -226,7 +205,7 @@ function renderCart(): void {
   }
 }
 
-function toggleCartDrawer(open: boolean): void {
+function toggleCartDrawer(open) {
   const drawer = document.getElementById('cartDrawer');
   const backdrop = document.getElementById('drawerBackdrop');
   if (!drawer || !backdrop) return;
@@ -235,73 +214,63 @@ function toggleCartDrawer(open: boolean): void {
   drawer.setAttribute('aria-hidden', String(!open));
 }
 
-function setText(id: string, value: string): void {
+function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
 }
 
-// ============================================================================
-// INITIALIZE EVENT LISTENERS
-// ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
   renderCatalog();
   calculatePlateQuote();
   renderCart();
 
-  // Category filter buttons
-  document.querySelectorAll<HTMLButtonElement>('.filter-pill').forEach((pill) => {
+  document.querySelectorAll('.filter-pill').forEach((pill) => {
     pill.addEventListener('click', () => {
       document.querySelectorAll('.filter-pill').forEach((p) => p.classList.remove('active'));
       pill.classList.add('active');
-      activeCategory = (pill.getAttribute('data-category') || 'ALL') as ProductCategory | 'ALL';
+      activeCategory = pill.getAttribute('data-category') || 'ALL';
       renderCatalog();
     });
   });
 
-  // Search bar
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const searchInput = document.getElementById('searchInput');
   searchInput?.addEventListener('input', () => {
     searchQuery = searchInput.value;
     renderCatalog();
   });
 
-  // Rescue Kit button
   document.getElementById('addRescueKitBtn')?.addEventListener('click', () => {
     addProductToCart(FTC_RESCUE_KIT);
   });
 
-  // Plate calculator inputs
   ['plateMaterial', 'plateQty', 'plateWidth', 'plateHeight'].forEach((id) => {
     document.getElementById(id)?.addEventListener('input', calculatePlateQuote);
   });
 
-  // DXF file input placeholder
-  const dxfInput = document.getElementById('dxfFileInput') as HTMLInputElement;
+  const dxfInput = document.getElementById('dxfFileInput');
   dxfInput?.addEventListener('change', () => {
     if (dxfInput.files && dxfInput.files[0]) {
       uploadedFileName = dxfInput.files[0].name;
-      setText('fileNameDisplay', `Loaded DXF: ${uploadedFileName} (Bounding box auto-detected)`);
+      setText('fileNameDisplay', `Loaded DXF: ${uploadedFileName}`);
     }
   });
 
   document.getElementById('addCustomPlateBtn')?.addEventListener('click', addCustomPlateJobToCart);
 
-  // Cart drawer controls
   document.getElementById('openCartBtn')?.addEventListener('click', () => toggleCartDrawer(true));
   document.getElementById('closeCartBtn')?.addEventListener('click', () => toggleCartDrawer(false));
   document.getElementById('drawerBackdrop')?.addEventListener('click', () => toggleCartDrawer(false));
 
-  // Checkout placeholder
   document.getElementById('checkoutBtn')?.addEventListener('click', () => {
     if (cart.length === 0) {
-      alert('Add hardware or a custom plate job to your cart first!');
+      alert('Add items to your cart first!');
       return;
     }
-    const isPO = (document.getElementById('poCheckoutToggle') as HTMLInputElement)?.checked;
+    const isPO = document.getElementById('poCheckoutToggle')?.checked;
     alert(
       isPO
-        ? 'Placeholder: Redirecting to School Purchase Order (Net-30) & Tax-Exempt Certificate Upload Portal.'
-        : 'Placeholder: Redirecting to Stripe / Shopify Checkout for instant card payment.'
+        ? 'Placeholder: Redirecting to School Purchase Order (Net-30) & Tax-Exempt Upload Portal.'
+        : 'Placeholder: Redirecting to Checkout.'
     );
   });
 });
